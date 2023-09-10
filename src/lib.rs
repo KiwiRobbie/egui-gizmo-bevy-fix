@@ -165,9 +165,15 @@ impl Gizmo {
                 if let Some(subgizmo) = self.pick_subgizmo(ui, pointer_ray) {
                     subgizmo.focused = true;
 
-                    let interaction = ui.interact(viewport, id, Sense::click_and_drag());
-                    let dragging = interaction.dragged_by(PointerButton::Primary);
-                    if interaction.drag_started() && dragging {
+                    let (dragging, drag_started) = ui.input(|input| {
+                        (
+                            input.pointer.primary_down(),
+                            input.pointer.primary_pressed(),
+                        )
+                    }); // ui.interact(viewport, id, Sense::click_and_drag());
+                        // let dragging = interaction.dragged_by(PointerButton::Primary);
+                        // if interaction.drag_started() && dragging {
+                    if dragging && drag_started {
                         state.active_subgizmo_id = Some(subgizmo.id);
                     }
                 }
@@ -590,9 +596,7 @@ struct GizmoState {
 
 pub(crate) trait WidgetData: Sized + Default + Copy + Clone + Send + Sync + 'static {
     fn load(ctx: &Context, gizmo_id: Id) -> Self {
-        ctx.memory_mut(|mem|{
-            *mem.data.get_temp_mut_or_default::<Self>(gizmo_id)
-        })
+        ctx.memory_mut(|mem| *mem.data.get_temp_mut_or_default::<Self>(gizmo_id))
     }
 
     fn save(self, ctx: &Context, gizmo_id: Id) {
